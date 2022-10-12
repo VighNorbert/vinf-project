@@ -13,15 +13,16 @@ public class IdentifiedPerson extends Person {
     private String birthPlace;
     private String deathPlace;
 
-    private Person mother;
-    private Person father;
+    private final ArrayList<Person> parents;
     private final ArrayList<Person> children;
+    private final ArrayList<Person> spouse;
 
 
     private IdentifiedPerson(String name) {
         super(name);
+        this.parents = new ArrayList<>();
         this.children = new ArrayList<>();
-
+        this.spouse = new ArrayList<>();
     }
 
     public String getName() {
@@ -60,20 +61,12 @@ public class IdentifiedPerson extends Person {
         this.deathPlace = deathPlace;
     }
 
-    public Person getMother() {
-        return mother;
+    public ArrayList<Person> getParents() {
+        return parents;
     }
 
-    public void setMother(Person mother) {
-        this.mother = mother;
-    }
-
-    public Person getFather() {
-        return father;
-    }
-
-    public void setFather(Person father) {
-        this.father = father;
+    public void addParent(Person parent) {
+        this.parents.add(parent);
     }
 
     public ArrayList<Person> getChildren() {
@@ -84,6 +77,24 @@ public class IdentifiedPerson extends Person {
         this.children.add(child);
     }
 
+    public ArrayList<Person> getSpouse() {
+        return spouse;
+    }
+
+    public void addSpouse(Person spouse) {
+        this.spouse.add(spouse);
+    }
+
+    public static void addMatch(HashMap<String, ArrayList<Integer>> matchMap, String entity, int distance) {
+        if (matchMap.containsKey(entity)) {
+            matchMap.get(entity).add(distance);
+        } else {
+            ArrayList<Integer> list = new ArrayList<>();
+            list.add(distance);
+            matchMap.put(entity, list);
+        }
+    }
+
 
     public static void closestMatches(Pattern pattern, String ln, HashMap<String, ArrayList<Integer>> matchMap, ArrayList<String> matchStrings) {
         Matcher mm = pattern.matcher(ln);
@@ -91,41 +102,68 @@ public class IdentifiedPerson extends Person {
             matchStrings.add(ln);
 
             String start = ln.substring(0, mm.start());
-            try {
-                int endPos = start.lastIndexOf("]]");
-                String ce = start.substring(start.lastIndexOf("[[") + 2, start.lastIndexOf("]]"));
-                if (ce.contains("|")) {
-                    ce = ce.substring(0, ce.indexOf("|"));
-                }
-                if (matchMap.containsKey(ce)) {
-                    matchMap.get(ce).add(start.length() - endPos);
+            Matcher ms = Patterns.lastEntity.matcher(start);
+            if (ms.find()) {
+                String entity = ms.group();
+                int pipePos = entity.indexOf("|");
+                int endPos = entity.indexOf("]]");
+                if (pipePos < 0 && endPos < 0) {
+                    Matcher em = Patterns.namedEntity.matcher(entity);
+                    if (em.find()) {
+                        entity = em.group();
+                        addMatch(matchMap, entity, -entity.length() + em.end());
+                    }
                 } else {
-                    ArrayList<Integer> distances = new ArrayList<>();
-                    distances.add(start.length() - endPos);
-                    matchMap.put(ce, distances);
+                    entity = entity.substring(2);
+                    if (entity.startsWith(":simple:")) {
+                        entity = entity.substring(8);
+                    }
+                    pipePos = entity.indexOf("|");
+                    endPos = entity.indexOf("]]");
+                    if (endPos < 0) {
+                        endPos = pipePos;
+                    } else if (pipePos != -1) {
+                        endPos = Math.min(pipePos, endPos);
+                    }
+                    try {
+                        entity = entity.substring(0, endPos);
+                        addMatch(matchMap, entity, -start.length() + start.lastIndexOf("]]"));
+                    } catch (StringIndexOutOfBoundsException ignored) {}
                 }
-            } catch (StringIndexOutOfBoundsException ignored) {
-//                System.out.println("Error parsing: " + start);
-//                System.out.println(start.lastIndexOf("[[") + ":" + start.lastIndexOf("]]"));
             }
 
             String end = ln.substring(mm.end());
-            try {
-                int startPos = end.indexOf("[[");
-                String ce = end.substring(startPos + 2, end.indexOf("]]"));
-                if (ce.contains("|")) {
-                    ce = ce.substring(0, ce.indexOf("|"));
-                }
-                if (matchMap.containsKey(ce)) {
-                    matchMap.get(ce).add(startPos);
+            if (pattern == Patterns.child && end.startsWith("of")) {
+                return;
+            }
+            Matcher me = Patterns.firstEntity.matcher(end);
+            if (me.find()) {
+                String entity = me.group();
+                int pipePos = entity.indexOf("|");
+                int endPos = entity.indexOf("]]");
+                if (pipePos < 0 && endPos < 0) {
+                    Matcher em = Patterns.namedEntity.matcher(entity);
+                    if (em.find()) {
+                        entity = em.group();
+                        addMatch(matchMap, entity, em.start());
+                    }
                 } else {
-                    ArrayList<Integer> distances = new ArrayList<>();
-                    distances.add(startPos);
-                    matchMap.put(ce, distances);
+                    entity = entity.substring(entity.indexOf("[[") + 2);
+                    if (entity.startsWith(":simple:")) {
+                        entity = entity.substring(8);
+                    }
+                    pipePos = entity.indexOf("|");
+                    endPos = entity.indexOf("]]");
+                    if (endPos < 0) {
+                        endPos = pipePos;
+                    } else if (pipePos >= 0) {
+                        endPos = Math.min(pipePos, endPos);
+                    }
+                    try {
+                        entity = entity.substring(0, endPos);
+                        addMatch(matchMap, entity, end.indexOf("[["));
+                    } catch (StringIndexOutOfBoundsException ignored) {}
                 }
-            } catch (StringIndexOutOfBoundsException ignored) {
-//                System.out.println("Error parsing: " + end);
-//                System.out.println(end.indexOf("[[") + ":min(" + end.indexOf("|") + "," + end.indexOf("]]") + ")");
             }
         }
     }
@@ -135,33 +173,26 @@ public class IdentifiedPerson extends Person {
         String ln = "";
         IdentifiedPerson person = new IdentifiedPerson(page.getTitle());
 
-        ArrayList<String> motherMatchStrings = new ArrayList<>();
-        ArrayList<String> fatherMatchStrings = new ArrayList<>();
+        ArrayList<String> parentMatchStrings = new ArrayList<>();
         ArrayList<String> childMatchStrings = new ArrayList<>();
-        HashMap<String, ArrayList<Integer>> motherMatches = new HashMap<>();
-        HashMap<String, ArrayList<Integer>> fatherMatches = new HashMap<>();
+        ArrayList<String> spouseMatchStrings = new ArrayList<>();
+        HashMap<String, ArrayList<Integer>> parentMatches = new HashMap<>();
         HashMap<String, ArrayList<Integer>> childMatches = new HashMap<>();
+        HashMap<String, ArrayList<Integer>> spouseMatches = new HashMap<>();
 
         while ((ln = br.readLine()) != null) {
-            closestMatches(Patterns.mother, ln, motherMatches, motherMatchStrings);
-            closestMatches(Patterns.father, ln, fatherMatches, fatherMatchStrings);
+            closestMatches(Patterns.parent, ln, parentMatches, parentMatchStrings);
             closestMatches(Patterns.child, ln, childMatches, childMatchStrings);
+            closestMatches(Patterns.spouse, ln, spouseMatches, spouseMatchStrings);
         }
 
         if (Main.DEBUG) {
-            System.out.println("\nMother matches: " + motherMatchStrings.size());
-            for (String match : motherMatchStrings) {
+            System.out.println("\nParent matches: " + parentMatchStrings.size());
+            for (String match : parentMatchStrings) {
                 System.out.println(match);
             }
-            for (Map.Entry<String, ArrayList<Integer>> entry : motherMatches.entrySet()) {
-                System.out.println(entry.getKey() + ": " + entry.getValue());
-            }
-
-            System.out.println("\nFather matches: " + fatherMatchStrings.size());
-            for (String match : fatherMatchStrings) {
-                System.out.println(match);
-            }
-            for (Map.Entry<String, ArrayList<Integer>> entry : fatherMatches.entrySet()) {
+            System.out.println("Relevant Parent matches: " + parentMatches.size());
+            for (Map.Entry<String, ArrayList<Integer>> entry : parentMatches.entrySet()) {
                 System.out.println(entry.getKey() + ": " + entry.getValue());
             }
 
@@ -169,9 +200,21 @@ public class IdentifiedPerson extends Person {
             for (String match : childMatchStrings) {
                 System.out.println(match);
             }
+            System.out.println("Relevant Child matches: " + childMatches.size());
             for (Map.Entry<String, ArrayList<Integer>> entry : childMatches.entrySet()) {
                 System.out.println(entry.getKey() + ": " + entry.getValue());
             }
+
+            System.out.println("\nSpouse matches: " + spouseMatchStrings.size());
+            for (String match : spouseMatchStrings) {
+                System.out.println(match);
+            }
+            System.out.println("Relevant Spouse matches: " + spouseMatches.size());
+            for (Map.Entry<String, ArrayList<Integer>> entry : spouseMatches.entrySet()) {
+                System.out.println(entry.getKey() + ": " + entry.getValue());
+            }
+
+            // vyhodit objekty ktore nie su ludia (vytvorime si zoznam
         }
 
         return person;

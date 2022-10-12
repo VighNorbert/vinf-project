@@ -43,6 +43,7 @@ public class Page {
             if (!isPerson && Patterns.categoryPeople.matcher(ln).find()) {
                 isPerson = true;
             }
+            ln = ln.replaceAll("\\s+", " ");
             content.append(ln).append(System.getProperty("line.separator"));
         } while ((ln = reader.readLine()) != null && !Patterns.pageEnd.matcher(ln).find());
         content.append(ln);
