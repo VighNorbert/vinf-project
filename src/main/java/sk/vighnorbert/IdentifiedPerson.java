@@ -9,9 +9,12 @@ import java.util.regex.Pattern;
 
 public class IdentifiedPerson extends Person {
     private String birthDate;
-    private String deathDate;
     private String birthPlace;
+
+    private String deathDate;
     private String deathPlace;
+
+    private MatchesHolder mh;
 
     private final ArrayList<Person> parents;
     private final ArrayList<Person> children;
@@ -23,6 +26,7 @@ public class IdentifiedPerson extends Person {
         this.parents = new ArrayList<>();
         this.children = new ArrayList<>();
         this.spouse = new ArrayList<>();
+        this.mh = new MatchesHolder();
     }
 
     public String getName() {
@@ -85,18 +89,7 @@ public class IdentifiedPerson extends Person {
         this.spouse.add(spouse);
     }
 
-    public static void addMatch(HashMap<String, ArrayList<Integer>> matchMap, String entity, int distance) {
-        if (matchMap.containsKey(entity)) {
-            matchMap.get(entity).add(distance);
-        } else {
-            ArrayList<Integer> list = new ArrayList<>();
-            list.add(distance);
-            matchMap.put(entity, list);
-        }
-    }
-
-
-    public static void closestMatches(Pattern pattern, String ln, HashMap<String, ArrayList<Integer>> matchMap, ArrayList<String> matchStrings) {
+    public static void closestMatches(Pattern pattern, String ln, String ipname, ArrayList<Person> matches, ArrayList<String> matchStrings, ArrayList<Person> finalCollection) {
         Matcher mm = pattern.matcher(ln);
         if (mm.find()) {
             matchStrings.add(ln);
@@ -109,9 +102,11 @@ public class IdentifiedPerson extends Person {
                 int endPos = entity.indexOf("]]");
                 if (pipePos < 0 && endPos < 0) {
                     Matcher em = Patterns.namedEntity.matcher(entity);
-                    if (em.find()) {
+                    if (em.find() && Math.abs(-entity.length() + em.end()) < 20) {
                         entity = em.group();
-                        addMatch(matchMap, entity, -entity.length() + em.end());
+                        if (!entity.equals(ipname)) {
+                            finalCollection.add(new Person(entity));
+                        }
                     }
                 } else {
                     entity = entity.substring(2);
@@ -125,10 +120,13 @@ public class IdentifiedPerson extends Person {
                     } else if (pipePos != -1) {
                         endPos = Math.min(pipePos, endPos);
                     }
-                    try {
-                        entity = entity.substring(0, endPos);
-                        addMatch(matchMap, entity, -start.length() + start.lastIndexOf("]]"));
-                    } catch (StringIndexOutOfBoundsException ignored) {}
+                    if (Math.abs(-start.length() + start.lastIndexOf("]]")) < 20) {
+                        try {
+                            entity = entity.substring(0, endPos);
+                            matches.add(new Person(entity));
+                        } catch (StringIndexOutOfBoundsException ignored) {
+                        }
+                    }
                 }
             }
 
@@ -143,9 +141,11 @@ public class IdentifiedPerson extends Person {
                 int endPos = entity.indexOf("]]");
                 if (pipePos < 0 && endPos < 0) {
                     Matcher em = Patterns.namedEntity.matcher(entity);
-                    if (em.find()) {
+                    if (em.find() && Math.abs(em.start()) < 20) {
                         entity = em.group();
-                        addMatch(matchMap, entity, em.start());
+                        if (!entity.equals(ipname)) {
+                            finalCollection.add(new Person(entity));
+                        }
                     }
                 } else {
                     entity = entity.substring(entity.indexOf("[[") + 2);
@@ -159,10 +159,13 @@ public class IdentifiedPerson extends Person {
                     } else if (pipePos >= 0) {
                         endPos = Math.min(pipePos, endPos);
                     }
-                    try {
-                        entity = entity.substring(0, endPos);
-                        addMatch(matchMap, entity, end.indexOf("[["));
-                    } catch (StringIndexOutOfBoundsException ignored) {}
+                    if (Math.abs(end.indexOf("[[")) < 20) {
+                        try {
+                            entity = entity.substring(0, endPos);
+                            matches.add(new Person(entity));
+                        } catch (StringIndexOutOfBoundsException ignored) {
+                        }
+                    }
                 }
             }
         }
@@ -171,52 +174,86 @@ public class IdentifiedPerson extends Person {
     public static IdentifiedPerson parse(Page page) throws IOException {
         BufferedReader br = new BufferedReader(new StringReader(page.getContent()));
         String ln = "";
-        IdentifiedPerson person = new IdentifiedPerson(page.getTitle());
-
-        ArrayList<String> parentMatchStrings = new ArrayList<>();
-        ArrayList<String> childMatchStrings = new ArrayList<>();
-        ArrayList<String> spouseMatchStrings = new ArrayList<>();
-        HashMap<String, ArrayList<Integer>> parentMatches = new HashMap<>();
-        HashMap<String, ArrayList<Integer>> childMatches = new HashMap<>();
-        HashMap<String, ArrayList<Integer>> spouseMatches = new HashMap<>();
+        IdentifiedPerson ip = new IdentifiedPerson(page.getTitle());
 
         while ((ln = br.readLine()) != null) {
-            closestMatches(Patterns.parent, ln, parentMatches, parentMatchStrings);
-            closestMatches(Patterns.child, ln, childMatches, childMatchStrings);
-            closestMatches(Patterns.spouse, ln, spouseMatches, spouseMatchStrings);
+            closestMatches(Patterns.parent, ln, ip.getName(), ip.mh.parentMatches, ip.mh.parentMatchStrings, ip.parents);
+            closestMatches(Patterns.child, ln, ip.getName(), ip.mh.childMatches, ip.mh.childMatchStrings, ip.children);
+            closestMatches(Patterns.spouse, ln, ip.getName(), ip.mh.spouseMatches, ip.mh.spouseMatchStrings, ip.spouse);
         }
 
         if (Main.DEBUG) {
-            System.out.println("\nParent matches: " + parentMatchStrings.size());
-            for (String match : parentMatchStrings) {
+            System.out.println("\nParent matches: " + ip.mh.parentMatchStrings.size());
+            for (String match : ip.mh.parentMatchStrings) {
                 System.out.println(match);
             }
-            System.out.println("Relevant Parent matches: " + parentMatches.size());
-            for (Map.Entry<String, ArrayList<Integer>> entry : parentMatches.entrySet()) {
-                System.out.println(entry.getKey() + ": " + entry.getValue());
+            System.out.println("Relevant Parent matches: " + ip.mh.parentMatches.size());
+            for (Person person : ip.mh.parentMatches) {
+                System.out.println(person.getName());
+            }
+            System.out.println("Final Parent matches: " + ip.parents.size());
+            for (Person person : ip.parents) {
+                System.out.println(person.getName());
             }
 
-            System.out.println("\nChild matches: " + childMatchStrings.size());
-            for (String match : childMatchStrings) {
+            System.out.println("\nChild matches: " + ip.mh.childMatchStrings.size());
+            for (String match : ip.mh.childMatchStrings) {
                 System.out.println(match);
             }
-            System.out.println("Relevant Child matches: " + childMatches.size());
-            for (Map.Entry<String, ArrayList<Integer>> entry : childMatches.entrySet()) {
-                System.out.println(entry.getKey() + ": " + entry.getValue());
+            System.out.println("Relevant Child matches: " + ip.mh.childMatches.size());
+            for (Person person : ip.mh.childMatches) {
+                System.out.println(person.getName());
+            }
+            System.out.println("Final Child matches: " + ip.children.size());
+            for (Person person : ip.children) {
+                System.out.println(person.getName());
             }
 
-            System.out.println("\nSpouse matches: " + spouseMatchStrings.size());
-            for (String match : spouseMatchStrings) {
+            System.out.println("\nSpouse matches: " + ip.mh.spouseMatchStrings.size());
+            for (String match : ip.mh.spouseMatchStrings) {
                 System.out.println(match);
             }
-            System.out.println("Relevant Spouse matches: " + spouseMatches.size());
-            for (Map.Entry<String, ArrayList<Integer>> entry : spouseMatches.entrySet()) {
-                System.out.println(entry.getKey() + ": " + entry.getValue());
+            System.out.println("Relevant Spouse matches: " + ip.mh.spouseMatches.size());
+            for (Person person : ip.mh.spouseMatches) {
+                System.out.println(person.getName());
             }
-
-            // vyhodit objekty ktore nie su ludia (vytvorime si zoznam
+            System.out.println("Final Spouse matches: " + ip.spouse.size());
+            for (Person person : ip.spouse) {
+                System.out.println(person.getName());
+            }
         }
 
-        return person;
+        return ip;
+    }
+
+    public void runBackCheck(PersonIndex pi) {
+        for (Person p : mh.parentMatches) {
+            if (p.getName().equals(this.getName())) {
+                continue;
+            }
+            Person c = pi.isPerson(p.getName());
+            if (c != null) {
+                parents.add(c);
+            }
+        }
+        for (Person p : mh.childMatches) {
+            if (p.getName().equals(this.getName())) {
+                continue;
+            }
+            Person c = pi.isPerson(p.getName());
+            if (c != null) {
+                children.add(c);
+            }
+        }
+        for (Person p : mh.spouseMatches) {
+            if (p.getName().equals(this.getName())) {
+                continue;
+            }
+            Person c = pi.isPerson(p.getName());
+            if (c != null) {
+                spouse.add(c);
+            }
+        }
+        mh = null;
     }
 }
