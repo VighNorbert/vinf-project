@@ -2,6 +2,9 @@ package sk.vighnorbert;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Scanner;
+
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 public class Main {
@@ -36,7 +39,7 @@ public class Main {
                 if (page != null) {
                     personCount++;
 
-                    DEBUG = personCount == 1;
+//                    DEBUG = page.getTitle().equals("Isaac Newton");
 
                     if (DEBUG) {
                         System.out.println(page.getTitle());
@@ -60,20 +63,53 @@ public class Main {
 
         index.runBackCheck();
 
-        IdentifiedPerson ip = (IdentifiedPerson) index.isPerson("Abraham Lincoln");
-        System.out.println("Abraham Lincoln");
-        ip.getParents().forEach((p) -> {
-            System.out.println("parent: \"" + p.getName() + "\"");
-        });
-        ip.getChildren().forEach((p) -> {
-            System.out.println("children: \"" + p.getName() + "\"");
-        });
-        ip.getSpouse().forEach((p) -> {
-            System.out.println("spouse: \"" + p.getName() + "\"");
-        });
-
         System.out.println(pagesCount + " total articles");
         System.out.println(personCount + " people found");
+
+        Scanner scanner = new Scanner(System.in);
+
+        String input = "";
+
+        while (true) {
+            System.out.println("Enter name to search for (or \"exit\" to end):");
+            input = scanner.nextLine();
+
+            if (input.equals("exit")) {
+                System.out.println("Exiting...");
+                break;
+            }
+
+            ArrayList<Person> people = index.getResults(input);
+            if (people.size() == 0) {
+                System.out.println("No person found with name \"" + input + "\"");
+            } else {
+                System.out.println("Found " + people.size() + " people with name \"" + input + "\":");
+                int i = 0;
+                if (people.size() > 1) {
+                    for (Person person : people) {
+                        i++;
+                        System.out.println("[" + i + "] " + person.getName());
+                    }
+                    System.out.println("Enter index of person to see details:");
+                }
+                while (true) {
+                    String si = (people.size() == 1) ? "1" : scanner.nextLine();
+                    try {
+                        i = Integer.parseInt(si);
+                        if (i > 0 && i <= people.size()) {
+                            IdentifiedPerson ip = (IdentifiedPerson) people.get(i - 1);
+                            System.out.println(ip.toString());
+                            break;
+                        } else {
+                            System.out.println("Invalid index, try again:");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid index, try again:");
+                    }
+                }
+//
+            }
+        }
 
     }
 

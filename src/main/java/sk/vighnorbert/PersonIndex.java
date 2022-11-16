@@ -1,5 +1,6 @@
 package sk.vighnorbert;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -10,32 +11,55 @@ public class PersonIndex {
         this.index = new HashMap<>();
     }
 
-    public static String getKey(String name) {
-        return name.toLowerCase().strip().split(" ")[0];
+    public static String[] getKey(String name) {
+        return name.toLowerCase().strip().split(" ");
     }
-    public static String getKey(Person p) {
-        return p.getName().toLowerCase().strip().split(" ")[0];
+    public static String[] getKey(Person p) {
+        return p.getName().toLowerCase().strip().split(" ");
     }
 
     public void addPerson(Person p) {
-        if (index.containsKey(getKey(p))) {
-            index.get(getKey(p)).add(p);
-        } else {
-            ArrayList<Person> list = new ArrayList<>();
-            list.add(p);
-            index.put(getKey(p), list);
+        for (String k : getKey(p)) {
+            if (index.containsKey(k)) {
+                index.get(k).add(p);
+            } else {
+                ArrayList<Person> list = new ArrayList<>();
+                list.add(p);
+                index.put(k, list);
+            }
         }
     }
 
     public Person isPerson(String name) {
-        if (index.containsKey(getKey(name))) {
-            for (Person p : index.get(getKey(name))) {
+        String k = getKey(name)[0];
+        if (index.containsKey(k)) {
+            for (Person p : index.get(k)) {
                 if (name.equals(p.getName())) {
                     return p;
                 }
             }
         }
         return null;
+    }
+
+    public ArrayList<Person> getResults(String query) {
+        String[] keys = getKey(query);
+        ArrayList<Person> results = new ArrayList<>();
+        for (String k : keys) {
+            if (index.containsKey(k)) {
+                for (Person p : index.get(k)) {
+                    boolean contains = results.contains(p);
+                    if (!contains) {
+                        if (query.equals(p.getName())) {
+                            results.add(0, p);
+                        } else {
+                            results.add(p);
+                        }
+                    }
+                }
+            }
+        }
+        return results;
     }
 
     public void runBackCheck() {

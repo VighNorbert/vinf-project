@@ -8,6 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class IdentifiedPerson extends Person {
+
+    private final static int MAX_DISTANCE = 10;
     private String birthDate;
     private String birthPlace;
 
@@ -91,7 +93,11 @@ public class IdentifiedPerson extends Person {
 
     public static void closestMatches(Pattern pattern, String ln, String ipname, ArrayList<Person> matches, ArrayList<String> matchStrings, ArrayList<Person> finalCollection) {
         Matcher mm = pattern.matcher(ln);
-        if (mm.find()) {
+        while (mm.find()) {
+            if (Main.DEBUG && pattern == Patterns.parent) {
+                System.out.println("tu som");
+                System.out.println(ln);
+            }
             matchStrings.add(ln);
 
             String start = ln.substring(0, mm.start());
@@ -102,9 +108,10 @@ public class IdentifiedPerson extends Person {
                 int endPos = entity.indexOf("]]");
                 if (pipePos < 0 && endPos < 0) {
                     Matcher em = Patterns.namedEntity.matcher(entity);
-                    if (em.find() && Math.abs(-entity.length() + em.end()) < 20) {
+                    if (em.find() && Math.abs(-entity.length() + em.end()) < MAX_DISTANCE) {
                         entity = em.group();
-                        if (!entity.equals(ipname)) {
+                        Person p = new Person(entity);
+                        if (!entity.equals(ipname) && !finalCollection.contains(p)) {
                             finalCollection.add(new Person(entity));
                         }
                     }
@@ -120,10 +127,13 @@ public class IdentifiedPerson extends Person {
                     } else if (pipePos != -1) {
                         endPos = Math.min(pipePos, endPos);
                     }
-                    if (Math.abs(-start.length() + start.lastIndexOf("]]")) < 20) {
+                    if (Math.abs(-start.length() + start.lastIndexOf("]]")) < MAX_DISTANCE) {
                         try {
                             entity = entity.substring(0, endPos);
-                            matches.add(new Person(entity));
+                            Person p = new Person(entity);
+                            if (!matches.contains(p)) {
+                                matches.add(p);
+                            }
                         } catch (StringIndexOutOfBoundsException ignored) {
                         }
                     }
@@ -131,39 +141,45 @@ public class IdentifiedPerson extends Person {
             }
 
             String end = ln.substring(mm.end());
-            if (pattern == Patterns.child && end.startsWith("of")) {
-                return;
+            if (Main.DEBUG && pattern == Patterns.parent) {
+                System.out.println("end: " + end);
             }
-            Matcher me = Patterns.firstEntity.matcher(end);
-            if (me.find()) {
-                String entity = me.group();
-                int pipePos = entity.indexOf("|");
-                int endPos = entity.indexOf("]]");
-                if (pipePos < 0 && endPos < 0) {
-                    Matcher em = Patterns.namedEntity.matcher(entity);
-                    if (em.find() && Math.abs(em.start()) < 20) {
-                        entity = em.group();
-                        if (!entity.equals(ipname)) {
-                            finalCollection.add(new Person(entity));
+            if (!(pattern == Patterns.child && end.startsWith("of"))) {
+                Matcher me = Patterns.firstEntity.matcher(end);
+                if (me.find()) {
+                    String entity = me.group();
+                    int pipePos = entity.indexOf("|");
+                    int endPos = entity.indexOf("]]");
+                    if (pipePos < 0 && endPos < 0) {
+                        Matcher em = Patterns.namedEntity.matcher(entity);
+                        if (em.find() && Math.abs(em.start()) < MAX_DISTANCE) {
+                            entity = em.group();
+                            Person p = new Person(entity);
+                            if (!entity.equals(ipname) && !finalCollection.contains(p)) {
+                                finalCollection.add(p);
+                            }
                         }
-                    }
-                } else {
-                    entity = entity.substring(entity.indexOf("[[") + 2);
-                    if (entity.startsWith(":simple:")) {
-                        entity = entity.substring(8);
-                    }
-                    pipePos = entity.indexOf("|");
-                    endPos = entity.indexOf("]]");
-                    if (endPos < 0) {
-                        endPos = pipePos;
-                    } else if (pipePos >= 0) {
-                        endPos = Math.min(pipePos, endPos);
-                    }
-                    if (Math.abs(end.indexOf("[[")) < 20) {
-                        try {
-                            entity = entity.substring(0, endPos);
-                            matches.add(new Person(entity));
-                        } catch (StringIndexOutOfBoundsException ignored) {
+                    } else {
+                        entity = entity.substring(entity.indexOf("[[") + 2);
+                        if (entity.startsWith(":simple:")) {
+                            entity = entity.substring(8);
+                        }
+                        pipePos = entity.indexOf("|");
+                        endPos = entity.indexOf("]]");
+                        if (endPos < 0) {
+                            endPos = pipePos;
+                        } else if (pipePos >= 0) {
+                            endPos = Math.min(pipePos, endPos);
+                        }
+                        if (Math.abs(end.indexOf("[[")) < MAX_DISTANCE) {
+                            try {
+                                entity = entity.substring(0, endPos);
+                                Person p = new Person(entity);
+                                if (!matches.contains(p)) {
+                                    matches.add(p);
+                                }
+                            } catch (StringIndexOutOfBoundsException ignored) {
+                            }
                         }
                     }
                 }
@@ -227,33 +243,56 @@ public class IdentifiedPerson extends Person {
     }
 
     public void runBackCheck(PersonIndex pi) {
-        for (Person p : mh.parentMatches) {
-            if (p.getName().equals(this.getName())) {
-                continue;
+        if (mh != null) {
+            for (Person p : mh.parentMatches) {
+                if (p.getName().equals(this.getName())) {
+                    continue;
+                }
+                Person c = pi.isPerson(p.getName());
+                if (c != null && !parents.contains(c)) {
+                    parents.add(c);
+                }
             }
-            Person c = pi.isPerson(p.getName());
-            if (c != null) {
-                parents.add(c);
+            for (Person p : mh.childMatches) {
+                if (p.getName().equals(this.getName())) {
+                    continue;
+                }
+                Person c = pi.isPerson(p.getName());
+                if (c != null && !children.contains(c)) {
+                    children.add(c);
+                }
             }
+            for (Person p : mh.spouseMatches) {
+                if (p.getName().equals(this.getName())) {
+                    continue;
+                }
+                Person c = pi.isPerson(p.getName());
+                if (c != null && !spouse.contains(c)) {
+                    spouse.add(c);
+                }
+            }
+            mh = null;
         }
-        for (Person p : mh.childMatches) {
-            if (p.getName().equals(this.getName())) {
-                continue;
-            }
-            Person c = pi.isPerson(p.getName());
-            if (c != null) {
-                children.add(c);
-            }
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Name: ").append(name).append("\n");
+        if (parents.size() > 0) {
+            parents.forEach(p -> sb.append("Parent: ").append(p.getName()).append("\n"));
+        } else {
+            sb.append("No parents found\n");
         }
-        for (Person p : mh.spouseMatches) {
-            if (p.getName().equals(this.getName())) {
-                continue;
-            }
-            Person c = pi.isPerson(p.getName());
-            if (c != null) {
-                spouse.add(c);
-            }
+        if (children.size() > 0) {
+            children.forEach(p -> sb.append("Child: ").append(p.getName()).append("\n"));
+        } else {
+            sb.append("No children found\n");
         }
-        mh = null;
+        if (spouse.size() > 0) {
+            spouse.forEach(p -> sb.append("Spouse: ").append(p.getName()).append("\n"));
+        } else {
+            sb.append("No spouse found\n");
+        }
+        return sb.toString();
     }
 }

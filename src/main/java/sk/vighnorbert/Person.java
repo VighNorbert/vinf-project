@@ -11,4 +11,11 @@ public class Person {
     public String getName() {
         return name;
     }
+
+    public boolean equals(Object o) {
+        if (o instanceof Person) {
+            return name.equals(((Person) o).getName());
+        }
+        return false;
+    }
 }
