@@ -5,7 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+//import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.spark.SparkConf;
 
 public class Main {
 
