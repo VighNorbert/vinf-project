@@ -65,7 +65,8 @@ public class PersonIndex {
     public void runBackCheck() {
         for (ArrayList<Person> list : index.values()) {
             for (Person p : list) {
-                if (p instanceof IdentifiedPerson ip) {
+                if (p instanceof IdentifiedPerson) {
+                    IdentifiedPerson ip = (IdentifiedPerson) p;
                     ip.runBackCheck(this);
 
                     for (Person parent : ip.getParents()) {

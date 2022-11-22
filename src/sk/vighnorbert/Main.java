@@ -7,12 +7,14 @@ import java.util.Scanner;
 
 //import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SQLContext;
 
 public class Main {
 
-//    public static String FILENAME = "C:\\wiki\\enwiki-20221020-pages-articles-multistream.xml.bz2";
-    public static String FILENAME = "C:\\wiki\\enwiki-latest-pages-articles1.xml";
-//    public static String FILENAME = "C:\\wiki\\enwiki-pages-articles.xml";
+    public static String FILENAME = "/home/ubuntu/Projects/wiki/articles1.xml";
     public static boolean DEBUG = false;
     public static boolean VERBOSE = false;
 
@@ -27,6 +29,16 @@ public class Main {
         // read from bz2
 //        InputStream inputStream = new BZip2CompressorInputStream(new FileInputStream(file), true);
 //        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+
+        SparkConf sparkConf = new SparkConf().setMaster("local[*]").setAppName("FamilyTree");
+        JavaSparkContext sc = new JavaSparkContext(sparkConf);
+
+        JavaRDD<String> inputFile = sc.textFile(FILENAME);
+
+        SQLContext sqlc = new SQLContext(sc);
+
+        // za .option sa da pridat .schema() a tam trochu carovat
+        JavaRDD<Row> xmlDf = sqlc.read().format("com.databricks.spark.xml").option("rowTag", "page").load(FILENAME).toJavaRDD();
 
         PersonIndex index = new PersonIndex();
 
