@@ -40,6 +40,12 @@ public class Main {
         // za .option sa da pridat .schema() a tam trochu carovat
         JavaRDD<Row> xmlDf = sqlc.read().format("com.databricks.spark.xml").option("rowTag", "page").load(FILENAME).toJavaRDD();
 
+        xmlDf.foreach(row -> {
+            System.out.println("row");
+            System.out.println(row);
+        });
+
+        /*
         PersonIndex index = new PersonIndex();
 
         String ln = "";
@@ -123,7 +129,7 @@ public class Main {
 //
             }
         }
-
+        */
     }
 
 }
