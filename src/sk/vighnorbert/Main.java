@@ -5,12 +5,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-//import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.StructType;
 
 public class Main {
 
@@ -30,23 +28,37 @@ public class Main {
 //        InputStream inputStream = new BZip2CompressorInputStream(new FileInputStream(file), true);
 //        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
-        SparkConf sparkConf = new SparkConf().setMaster("local[*]").setAppName("FamilyTree");
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-        JavaRDD<String> inputFile = sc.textFile(FILENAME);
+        SparkSession spark = SparkSession.builder().master("local[*]").appName("FamilyTree").getOrCreate();
 
-        SQLContext sqlc = new SQLContext(sc);
+        StructType schema = new StructType()
+                .add("id", "long")
+                .add("ns", "long")
+                .add("redirect", new StructType()
+                        .add("_VALUE", "string")
+                        .add("_title", "string"))
+                .add("revision", new StructType()
+                        .add("text", new StructType()
+                                .add("_VALUE", "string")
+                                .add("_bytes", "long")
+                                .add("_xml:space", "string")))
+                .add("title", "string");
 
-        // za .option sa da pridat .schema() a tam trochu carovat
-        JavaRDD<Row> xmlDf = sqlc.read().format("com.databricks.spark.xml").option("rowTag", "page").load(FILENAME).toJavaRDD();
 
-        xmlDf.foreach(row -> {
-            System.out.println("row");
-            System.out.println(row);
+        JavaRDD<Row> pagesDf = spark.sqlContext().read()
+                .format("com.databricks.spark.xml")
+                .option("rowTag", "page").schema(schema)
+                .load(FILENAME).toJavaRDD();
+
+        PersonIndex index = new PersonIndex();
+
+        pagesDf.foreach(page -> {
+            System.out.println("page ---------------------");
+            System.out.println(page.getAs("title").toString());
+
         });
 
         /*
-        PersonIndex index = new PersonIndex();
 
         String ln = "";
         int pagesCount = 0, personCount = 0;
