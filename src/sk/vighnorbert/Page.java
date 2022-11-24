@@ -1,7 +1,11 @@
 package sk.vighnorbert;
 
+import org.apache.spark.sql.Row;
+
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.regex.Matcher;
 
 public class Page {
@@ -46,6 +50,37 @@ public class Page {
             ln = ln.replaceAll("\\s+", " ");
             content.append(ln).append(System.getProperty("line.separator"));
         } while ((ln = reader.readLine()) != null && !Patterns.pageEnd.matcher(ln).find());
+        content.append(ln);
+        if (isPerson && p != null) {
+            p.setContent(content.toString());
+            return p;
+        }
+        return null;
+    }
+    public static Page read(Row row) throws IOException {
+        Page p = null;
+        StringBuilder content = new StringBuilder();
+        boolean isPerson = false;
+
+        BufferedReader reader = new BufferedReader(new StringReader(row.getAs("text")));
+        // while not end of page
+        String ln = "";
+        while ((ln = reader.readLine()) != null) {
+            if (p == null && Patterns.title.matcher(ln).find()) {
+                // try to match and get title
+                Matcher ms = Patterns.titleStart.matcher(ln);
+                Matcher me = Patterns.titleEnd.matcher(ln);
+                if (ms.find() && me.find()) {
+                    String title = ln.substring(ms.end(), me.start());
+                    p = new Page(title);
+                }
+            }
+            if (!isPerson && Patterns.categoryPeople.matcher(ln).find()) {
+                isPerson = true;
+            }
+            ln = ln.replaceAll("\\s+", " ");
+            content.append(ln).append(System.getProperty("line.separator"));
+        }
         content.append(ln);
         if (isPerson && p != null) {
             p.setContent(content.toString());

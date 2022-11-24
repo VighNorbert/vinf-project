@@ -14,15 +14,14 @@ public class Main {
 
     public static String FILENAME = "/home/ubuntu/Projects/wiki/articles1.xml";
     public static boolean DEBUG = false;
-    public static boolean VERBOSE = false;
 
     public static void main(String[] args) throws IOException {
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8));
 
-        File file = new File(FILENAME);
+//        File file = new File(FILENAME);
 
         // read from xml
-        BufferedReader reader = new BufferedReader(new FileReader(file));
+//        BufferedReader reader = new BufferedReader(new FileReader(file));
 
         // read from bz2
 //        InputStream inputStream = new BZip2CompressorInputStream(new FileInputStream(file), true);
@@ -52,10 +51,18 @@ public class Main {
 
         PersonIndex index = new PersonIndex();
 
-        pagesDf.foreach(page -> {
-            System.out.println("page ---------------------");
-            System.out.println(page.getAs("title").toString());
 
+        pagesDf.foreach(page -> {
+//            System.out.println("page ---------------------");
+//            System.out.println(page.getAs("title").toString());
+
+            Page p = Page.read(page);
+            if (p != null) {
+                DEBUG = page.getAs("title").toString().equals("Isaac Newton");
+
+                IdentifiedPerson person = IdentifiedPerson.parse(p);
+                index.addPerson(person);
+            }
         });
 
         /*
