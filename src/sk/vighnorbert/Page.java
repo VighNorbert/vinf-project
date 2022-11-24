@@ -1,6 +1,7 @@
 package sk.vighnorbert;
 
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -62,7 +63,10 @@ public class Page {
         StringBuilder content = new StringBuilder();
         boolean isPerson = false;
 
-        BufferedReader reader = new BufferedReader(new StringReader(row.getAs("text")));
+        GenericRowWithSchema revision = row.getAs("revision");
+        GenericRowWithSchema text = revision.getAs("text");
+        BufferedReader reader = new BufferedReader(new StringReader(text.getAs("_VALUE")));
+
         // while not end of page
         String ln = "";
         while ((ln = reader.readLine()) != null) {

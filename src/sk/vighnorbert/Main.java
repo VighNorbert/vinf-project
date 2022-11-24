@@ -58,12 +58,14 @@ public class Main {
 
             Page p = Page.read(page);
             if (p != null) {
-                DEBUG = page.getAs("title").toString().equals("Isaac Newton");
+//                DEBUG = page.getAs("text").toString().equals("Isaac Newton");
 
                 IdentifiedPerson person = IdentifiedPerson.parse(p);
                 index.addPerson(person);
             }
         });
+        index.runBackCheck();
+        index.writeToFile();
 
         /*
 

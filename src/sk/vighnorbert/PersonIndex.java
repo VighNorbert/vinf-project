@@ -1,10 +1,13 @@
 package sk.vighnorbert;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class PersonIndex {
+public class PersonIndex implements Serializable {
     private final HashMap<String, ArrayList<Person>> index;
 
     public PersonIndex() {
@@ -96,5 +99,22 @@ public class PersonIndex {
                 }
             }
         }
+    }
+
+    public void writeToFile() throws IOException {
+        FileWriter fw = new FileWriter("index.csv");
+
+        for (ArrayList<Person> list : index.values()) {
+            for (Person p : list) {
+                if (p instanceof IdentifiedPerson) {
+                    for ( :p.)
+                    fw.write(p.getName() + "\n");
+                }
+            }
+        }
+
+
+
+        fw.close();
     }
 }
