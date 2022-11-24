@@ -102,19 +102,32 @@ public class PersonIndex implements Serializable {
     }
 
     public void writeToFile() throws IOException {
-        FileWriter fw = new FileWriter("index.csv");
+        FileWriter fw = new FileWriter("index.out");
 
         for (ArrayList<Person> list : index.values()) {
             for (Person p : list) {
                 if (p instanceof IdentifiedPerson) {
-                    for ( :p.)
-                    fw.write(p.getName() + "\n");
+                    IdentifiedPerson ip = (IdentifiedPerson) p;
+
+                    fw.write(serializeCollection(ip.getSpouse(), "spouse", ip.getName()));
+                    fw.write(serializeCollection(ip.getParents(), "parent", ip.getName()));
+                    fw.write(serializeCollection(ip.getChildren(), "child", ip.getName()));
                 }
             }
         }
 
-
-
         fw.close();
+    }
+
+    private String serializeCollection(ArrayList<Person> collection, String key, String ipName) {
+        if (collection.size() > 0) {
+            StringBuilder s = new StringBuilder(ipName + "\t" + key);
+            for (Person item : collection) {
+                s.append("\t").append(item.getName());
+            }
+            s.append("\n");
+            return s.toString();
+        }
+        return "";
     }
 }
