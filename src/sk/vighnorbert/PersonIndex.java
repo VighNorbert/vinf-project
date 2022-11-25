@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class PersonIndex implements Serializable {
-    private final HashMap<String, ArrayList<Person>> index;
+    private final HashMap<String, ArrayList<IdentifiedPerson>> index;
 
     public PersonIndex() {
         this.index = new HashMap<>();
@@ -21,16 +21,20 @@ public class PersonIndex implements Serializable {
         return p.getName().toLowerCase().strip().split(" ");
     }
 
-    public void addPerson(Person p) {
+    public void addPerson(IdentifiedPerson p) {
+        System.out.println("adding person " + p.getName());
         for (String k : getKey(p)) {
             if (index.containsKey(k)) {
                 index.get(k).add(p);
             } else {
-                ArrayList<Person> list = new ArrayList<>();
+                ArrayList<IdentifiedPerson> list = new ArrayList<>();
                 list.add(p);
                 index.put(k, list);
             }
         }
+    }
+    public void out() {
+        System.out.println("size: " + index.values().size());
     }
 
     public Person isPerson(String name) {
@@ -66,7 +70,7 @@ public class PersonIndex implements Serializable {
     }
 
     public void runBackCheck() {
-        for (ArrayList<Person> list : index.values()) {
+        for (ArrayList<IdentifiedPerson> list : index.values()) {
             for (Person p : list) {
                 if (p instanceof IdentifiedPerson) {
                     IdentifiedPerson ip = (IdentifiedPerson) p;
@@ -102,10 +106,11 @@ public class PersonIndex implements Serializable {
     }
 
     public void writeToFile() throws IOException {
-        FileWriter fw = new FileWriter("index.out");
+        FileWriter fw = new FileWriter("extracted-data.out");
 
-        for (ArrayList<Person> list : index.values()) {
+        for (ArrayList<IdentifiedPerson> list : index.values()) {
             for (Person p : list) {
+                System.out.println("Writing " + p.getName());
                 if (p instanceof IdentifiedPerson) {
                     IdentifiedPerson ip = (IdentifiedPerson) p;
 

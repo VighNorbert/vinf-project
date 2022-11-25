@@ -1,8 +1,9 @@
 package sk.vighnorbert;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class MatchesHolder {
+public class MatchesHolder implements Serializable {
 
     public final ArrayList<String> parentMatchStrings = new ArrayList<>();
     public final ArrayList<String> childMatchStrings = new ArrayList<>();

@@ -59,26 +59,23 @@ public class Page {
         return null;
     }
     public static Page read(Row row) throws IOException {
-        Page p = null;
+        Page p = new Page(row.getAs("title").toString());
         StringBuilder content = new StringBuilder();
         boolean isPerson = false;
 
         GenericRowWithSchema revision = row.getAs("revision");
         GenericRowWithSchema text = revision.getAs("text");
-        BufferedReader reader = new BufferedReader(new StringReader(text.getAs("_VALUE")));
-
+        if (text == null) {
+            return null;
+        }
+        String pageText = text.getAs("_VALUE");
+        if (pageText == null) {
+            return null;
+        }
+        BufferedReader reader = new BufferedReader(new StringReader(pageText));
         // while not end of page
         String ln = "";
         while ((ln = reader.readLine()) != null) {
-            if (p == null && Patterns.title.matcher(ln).find()) {
-                // try to match and get title
-                Matcher ms = Patterns.titleStart.matcher(ln);
-                Matcher me = Patterns.titleEnd.matcher(ln);
-                if (ms.find() && me.find()) {
-                    String title = ln.substring(ms.end(), me.start());
-                    p = new Page(title);
-                }
-            }
             if (!isPerson && Patterns.categoryPeople.matcher(ln).find()) {
                 isPerson = true;
             }
@@ -86,7 +83,7 @@ public class Page {
             content.append(ln).append(System.getProperty("line.separator"));
         }
         content.append(ln);
-        if (isPerson && p != null) {
+        if (isPerson) {
             p.setContent(content.toString());
             return p;
         }

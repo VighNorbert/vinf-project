@@ -2,9 +2,9 @@ package sk.vighnorbert;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.Objects;
 
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -12,7 +12,7 @@ import org.apache.spark.sql.types.StructType;
 
 public class Main {
 
-    public static String FILENAME = "/home/ubuntu/Projects/wiki/articles1.xml";
+    public static String FILENAME = "/home/ubuntu/Projects/wiki/articles.xml";
     public static boolean DEBUG = false;
 
     public static void main(String[] args) throws IOException {
@@ -27,8 +27,9 @@ public class Main {
 //        InputStream inputStream = new BZip2CompressorInputStream(new FileInputStream(file), true);
 //        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
-
-        SparkSession spark = SparkSession.builder().master("local[*]").appName("FamilyTree").getOrCreate();
+        SparkSession spark = SparkSession.builder()
+                .master("local[*]").appName("FamilyTree")
+                .config("spark.driver.maxResultSize", "4g").getOrCreate();
 
         StructType schema = new StructType()
                 .add("id", "long")
@@ -49,10 +50,7 @@ public class Main {
                 .option("rowTag", "page").schema(schema)
                 .load(FILENAME).toJavaRDD();
 
-        PersonIndex index = new PersonIndex();
-
-
-        pagesDf.foreach(page -> {
+        JavaRDD<IdentifiedPerson> jrddip = pagesDf.map(page -> {
 //            System.out.println("page ---------------------");
 //            System.out.println(page.getAs("title").toString());
 
@@ -61,9 +59,19 @@ public class Main {
 //                DEBUG = page.getAs("text").toString().equals("Isaac Newton");
 
                 IdentifiedPerson person = IdentifiedPerson.parse(p);
-                index.addPerson(person);
+//                index.addPerson(person);
+//                index.out();
+                return person;
             }
-        });
+            return null;
+        }).filter(Objects::nonNull);
+
+        PersonIndex index = new PersonIndex();
+
+        for (IdentifiedPerson person : jrddip.collect()) {
+            index.addPerson(person);
+        }
+        index.out();
         index.runBackCheck();
         index.writeToFile();
 
