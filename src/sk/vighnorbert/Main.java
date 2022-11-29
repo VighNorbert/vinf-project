@@ -18,15 +18,6 @@ public class Main {
     public static void main(String[] args) throws IOException {
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8));
 
-//        File file = new File(FILENAME);
-
-        // read from xml
-//        BufferedReader reader = new BufferedReader(new FileReader(file));
-
-        // read from bz2
-//        InputStream inputStream = new BZip2CompressorInputStream(new FileInputStream(file), true);
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-
         SparkSession spark = SparkSession.builder()
                 .master("local[*]").appName("FamilyTree")
                 .config("spark.driver.maxResultSize", "4g").getOrCreate();
@@ -51,16 +42,11 @@ public class Main {
                 .load(FILENAME).toJavaRDD();
 
         JavaRDD<IdentifiedPerson> jrddip = pagesDf.map(page -> {
-//            System.out.println("page ---------------------");
-//            System.out.println(page.getAs("title").toString());
 
             Page p = Page.read(page);
             if (p != null) {
-//                DEBUG = page.getAs("text").toString().equals("Isaac Newton");
 
                 IdentifiedPerson person = IdentifiedPerson.parse(p);
-//                index.addPerson(person);
-//                index.out();
                 return person;
             }
             return null;
