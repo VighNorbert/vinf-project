@@ -154,9 +154,15 @@ public class PersonIndex implements Serializable {
                     }
 
                     switch (type) {
-                        case "spouse" -> p.addSpouse(p2);
-                        case "parent" -> p.addParent(p2);
-                        case "child" -> p.addChild(p2);
+                        case "spouse":
+                            p.addSpouse(p2);
+                            break;
+                        case "parent":
+                            p.addParent(p2);
+                            break;
+                        case "child":
+                            p.addChild(p2);
+                            break;
                     }
                 }
             }
