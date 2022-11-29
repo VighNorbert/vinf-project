@@ -23,7 +23,7 @@ public class IdentifiedPerson extends Person {
     private final ArrayList<Person> spouse;
 
 
-    private IdentifiedPerson(String name) {
+    public IdentifiedPerson(String name) {
         super(name);
         this.parents = new ArrayList<>();
         this.children = new ArrayList<>();
@@ -95,7 +95,6 @@ public class IdentifiedPerson extends Person {
         Matcher mm = pattern.matcher(ln);
         while (mm.find()) {
             if (Main.DEBUG && pattern == Patterns.parent) {
-                System.out.println("tu som");
                 System.out.println(ln);
             }
             matchStrings.add(ln);

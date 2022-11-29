@@ -1,8 +1,6 @@
 package sk.vighnorbert;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,11 +122,60 @@ public class PersonIndex implements Serializable {
         fw.close();
     }
 
+    public void readFromFile() throws IOException {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("extracted-data.out"));
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("\t");
+                String name = parts[0];
+                String type = parts[1];
+
+                IdentifiedPerson p = (IdentifiedPerson) isPerson(name);
+                if (p == null) {
+                    p = new IdentifiedPerson(name);
+                    addPerson(p);
+                }
+
+                for (int i = 2; i < parts.length; i++) {
+                    String name2 = parts[i];
+                    Person p2;
+
+                    if (name2.charAt(0) == '?') {
+                        name2 = name2.substring(1);
+                        p2 = new Person(name2);
+                    } else {
+                        p2 = isPerson(name2);
+                        if (p2 == null) {
+                            p2 = new IdentifiedPerson(name2);
+                            addPerson((IdentifiedPerson) p2);
+                        }
+                    }
+
+                    switch (type) {
+                        case "spouse" -> p.addSpouse(p2);
+                        case "parent" -> p.addParent(p2);
+                        case "child" -> p.addChild(p2);
+                    }
+                }
+            }
+
+            br.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("ERROR: File \"extracted-data.out\" not found! Run the parse command to extract it first.\n");
+        }
+    }
+
     private String serializeCollection(ArrayList<Person> collection, String key, String ipName) {
         if (collection.size() > 0) {
             StringBuilder s = new StringBuilder(ipName + "\t" + key);
             for (Person item : collection) {
-                s.append("\t").append(item.getName());
+                if (item instanceof IdentifiedPerson) {
+                    s.append("\t").append(item.getName());
+                } else {
+                    s.append("\t?").append(item.getName());
+                }
             }
             s.append("\n");
             return s.toString();

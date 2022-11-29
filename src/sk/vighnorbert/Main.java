@@ -2,7 +2,9 @@ package sk.vighnorbert;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Scanner;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -16,6 +18,40 @@ public class Main {
     public static boolean DEBUG = false;
 
     public static void main(String[] args) throws IOException {
+
+        Scanner scanner = new Scanner(System.in);
+        String in = "";
+
+        while (true) {
+            System.out.println("Available commands:");
+            System.out.println(" parse  - parse the input wiki file for relevant results");
+            System.out.println(" search - search in existing results");
+            System.out.println(" exit   - quit application\n");
+
+            System.out.println("Enter a command which should be executed:");
+            in = scanner.nextLine();
+
+            if (in.equals("exit")) {
+                System.out.println("Exiting...");
+                break;
+            }
+            switch (in) {
+                case "parse":
+                    System.out.println("Parsing...");
+                    parse();
+                    break;
+                case "search":
+                    System.out.println("Searching...");
+                    search();
+                    break;
+                default:
+                    System.out.println("Unknown command.\n");
+                    break;
+            }
+        }
+    }
+
+    public static void parse() throws IOException {
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8));
 
         SparkSession spark = SparkSession.builder()
@@ -45,9 +81,7 @@ public class Main {
 
             Page p = Page.read(page);
             if (p != null) {
-
-                IdentifiedPerson person = IdentifiedPerson.parse(p);
-                return person;
+                return IdentifiedPerson.parse(p);
             }
             return null;
         }).filter(Objects::nonNull);
@@ -61,44 +95,12 @@ public class Main {
         index.runBackCheck();
         index.writeToFile();
 
-        /*
+        System.out.println("Parsing done.");
+    }
+    public static void search() throws IOException {
+        PersonIndex index = new PersonIndex();
 
-        String ln = "";
-        int pagesCount = 0, personCount = 0;
-
-        while ((ln = reader.readLine()) != null) {
-            if (Patterns.pageStart.matcher(ln).find()) {
-                pagesCount++;
-                Page page = Page.read(reader, ln);
-                if (page != null) {
-                    personCount++;
-
-//                    DEBUG = page.getTitle().equals("Isaac Newton");
-
-                    if (DEBUG) {
-                        System.out.println(page.getTitle());
-                        System.out.println();
-                    }
-
-                    IdentifiedPerson person = IdentifiedPerson.parse(page);
-                    index.addPerson(person);
-
-                    if (DEBUG && VERBOSE) {
-                        System.out.println("\nFull page contents:");
-                        System.out.print(page.getContent());
-                        break;
-                    }
-                }
-                if (pagesCount % 1000 == 0) {
-                    System.out.println(personCount + " / " + pagesCount + "...");
-                }
-            }
-        }
-
-        index.runBackCheck();
-
-        System.out.println(pagesCount + " total articles");
-        System.out.println(personCount + " people found");
+        index.readFromFile();
 
         Scanner scanner = new Scanner(System.in);
 
@@ -141,10 +143,8 @@ public class Main {
                         System.out.println("Invalid index, try again:");
                     }
                 }
-//
             }
         }
-        */
     }
 
 }
