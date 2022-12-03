@@ -125,11 +125,23 @@ public class Main {
                     for (Person person : people) {
                         i++;
                         System.out.println("[" + i + "] " + person.getName());
+                        if (i == 10) {
+                            System.out.println("More than 10 results found, showing only first 10. Write \"more\" to show all.");
+                            break;
+                        }
                     }
                     System.out.println("Enter index of person to see details:");
                 }
                 while (true) {
                     String si = (people.size() == 1) ? "1" : scanner.nextLine();
+                    if (si == "more") {
+                        for (Person person : people) {
+                            i++;
+                            System.out.println("[" + i + "] " + person.getName());
+                        }
+                        System.out.println("Enter index of person to see details:");
+                        si = (people.size() == 1) ? "1" : scanner.nextLine();
+                    }
                     try {
                         i = Integer.parseInt(si);
                         if (i > 0 && i <= people.size()) {
