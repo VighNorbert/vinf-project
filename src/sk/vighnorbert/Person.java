@@ -5,6 +5,8 @@ import java.io.Serializable;
 public class Person implements Serializable {
     protected final String name;
 
+    public boolean serialized = false;
+
     public Person(String name) {
         this.name = name;
     }

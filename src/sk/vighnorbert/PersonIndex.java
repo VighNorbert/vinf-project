@@ -74,30 +74,30 @@ public class PersonIndex implements Serializable {
                     IdentifiedPerson ip = (IdentifiedPerson) p;
                     ip.runBackCheck(this);
 
-                    for (Person parent : ip.getParents()) {
-                        if (parent instanceof IdentifiedPerson) {
-                            IdentifiedPerson ipParent = (IdentifiedPerson) parent;
-                            if (!ipParent.getChildren().contains(ip)) {
-                                ipParent.addChild(ip);
-                            }
-                        }
-                    }
-                    for (Person child : ip.getChildren()) {
-                        if (child instanceof IdentifiedPerson) {
-                            IdentifiedPerson ipChild = (IdentifiedPerson) child;
-                            if (!ipChild.getParents().contains(ip)) {
-                                ipChild.addParent(ip);
-                            }
-                        }
-                    }
-                    for (Person spouse : ip.getSpouse()) {
-                        if (spouse instanceof IdentifiedPerson) {
-                            IdentifiedPerson ipSpouse = (IdentifiedPerson) spouse;
-                            if (!ipSpouse.getSpouse().contains(ip)) {
-                                ipSpouse.addSpouse(ip);
-                            }
-                        }
-                    }
+//                    for (Person parent : ip.getParents()) {
+//                        if (parent instanceof IdentifiedPerson) {
+//                            IdentifiedPerson ipParent = (IdentifiedPerson) parent;
+//                            if (!ipParent.getChildren().contains(ip)) {
+//                                ipParent.addChild(ip);
+//                            }
+//                        }
+//                    }
+//                    for (Person child : ip.getChildren()) {
+//                        if (child instanceof IdentifiedPerson) {
+//                            IdentifiedPerson ipChild = (IdentifiedPerson) child;
+//                            if (!ipChild.getParents().contains(ip)) {
+//                                ipChild.addParent(ip);
+//                            }
+//                        }
+//                    }
+//                    for (Person spouse : ip.getSpouse()) {
+//                        if (spouse instanceof IdentifiedPerson) {
+//                            IdentifiedPerson ipSpouse = (IdentifiedPerson) spouse;
+//                            if (!ipSpouse.getSpouse().contains(ip)) {
+//                                ipSpouse.addSpouse(ip);
+//                            }
+//                        }
+//                    }
                 }
             }
         }
@@ -108,6 +108,9 @@ public class PersonIndex implements Serializable {
 
         for (ArrayList<IdentifiedPerson> list : index.values()) {
             for (Person p : list) {
+                if (p.serialized) {
+                    continue;
+                }
                 System.out.println("Writing " + p.getName());
                 if (p instanceof IdentifiedPerson) {
                     IdentifiedPerson ip = (IdentifiedPerson) p;
@@ -116,6 +119,7 @@ public class PersonIndex implements Serializable {
                     fw.write(serializeCollection(ip.getParents(), "parent", ip.getName()));
                     fw.write(serializeCollection(ip.getChildren(), "child", ip.getName()));
                 }
+                p.serialized = true;
             }
         }
 
