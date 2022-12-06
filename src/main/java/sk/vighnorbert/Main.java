@@ -14,7 +14,7 @@ import org.apache.spark.sql.types.StructType;
 
 public class Main {
 
-    public static String FILENAME = "/home/ubuntu/Projects/wiki/articles.xml";
+    public static String FILENAME = "C:\\wiki\\enwiki-pages-articles.xml";
     public static boolean DEBUG = false;
 
     public static void main(String[] args) throws IOException {
@@ -52,7 +52,7 @@ public class Main {
     }
 
     public static void parse() throws IOException {
-        System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8));
+        System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
 
         SparkSession spark = SparkSession.builder()
                 .master("local[*]").appName("FamilyTree")
@@ -134,7 +134,7 @@ public class Main {
                 }
                 while (true) {
                     String si = (people.size() == 1) ? "1" : scanner.nextLine();
-                    if (si == "more") {
+                    if (si.equals("more")) {
                         for (Person person : people) {
                             i++;
                             System.out.println("[" + i + "] " + person.getName());

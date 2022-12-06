@@ -13,10 +13,10 @@ public class PersonIndex implements Serializable {
     }
 
     public static String[] getKey(String name) {
-        return name.toLowerCase().strip().split(" ");
+        return name.toLowerCase().trim().split(" ");
     }
     public static String[] getKey(Person p) {
-        return p.getName().toLowerCase().strip().split(" ");
+        return p.getName().toLowerCase().trim().split(" ");
     }
 
     public void addPerson(IdentifiedPerson p) {
