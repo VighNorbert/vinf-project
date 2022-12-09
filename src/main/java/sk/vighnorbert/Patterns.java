@@ -9,7 +9,6 @@ public class Patterns {
     public static final Pattern title = Pattern.compile("<title>.*</title>");
     public static final Pattern titleStart = Pattern.compile("<title>");
     public static final Pattern titleEnd = Pattern.compile("</title>");
-//    public static final Pattern categoryPeople = Pattern.compile("\\[\\[Category:(.*[Pp]eople|.*([Ww]o)?[Mm][ea]n\b|\\d{4} (births|deaths))");
     public static final Pattern categoryPeople = Pattern.compile("\\[\\[Category:People ");
     public static final Pattern parent = Pattern.compile("\\W([Hh]is |[Hh]er )?([Mm]other|[Ff]ather)[^'\\w]");
     public static final Pattern child = Pattern.compile("\\W([Cc]hild(ren)?|[Dd]aughter|[Ss]on)\\W");

@@ -58,6 +58,7 @@ public class Page {
         }
         return null;
     }
+
     public static Page read(Row row) throws IOException {
         Page p = new Page(row.getAs("title").toString());
         StringBuilder content = new StringBuilder();

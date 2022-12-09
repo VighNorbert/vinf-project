@@ -15,6 +15,7 @@ public class PersonIndex implements Serializable {
     public static String[] getKey(String name) {
         return name.toLowerCase().trim().split(" ");
     }
+
     public static String[] getKey(Person p) {
         return p.getName().toLowerCase().trim().split(" ");
     }
@@ -31,6 +32,7 @@ public class PersonIndex implements Serializable {
             }
         }
     }
+
     public void out() {
         System.out.println("size: " + index.values().size());
     }
@@ -152,7 +154,7 @@ public class PersonIndex implements Serializable {
         }
     }
 
-    private String serializeCollection(ArrayList<Person> collection, String key, String ipName) {
+    public String serializeCollection(ArrayList<Person> collection, String key, String ipName) {
         if (collection.size() > 0) {
             StringBuilder s = new StringBuilder(ipName + "\t" + key);
             for (Person item : collection) {

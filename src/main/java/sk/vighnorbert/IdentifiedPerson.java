@@ -10,12 +10,6 @@ import java.util.regex.Pattern;
 public class IdentifiedPerson extends Person {
 
     private final static int MAX_DISTANCE = 10;
-    private String birthDate;
-    private String birthPlace;
-
-    private String deathDate;
-    private String deathPlace;
-
     private MatchesHolder mh;
 
     private final ArrayList<Person> parents;
@@ -31,40 +25,12 @@ public class IdentifiedPerson extends Person {
         this.mh = new MatchesHolder();
     }
 
+    public MatchesHolder getMh() {
+        return mh;
+    }
+
     public String getName() {
         return name;
-    }
-
-    public String getBirthDate() {
-        return birthDate;
-    }
-
-    public void setBirthDate(String birthDate) {
-        this.birthDate = birthDate;
-    }
-
-    public String getDeathDate() {
-        return deathDate;
-    }
-
-    public void setDeathDate(String deathDate) {
-        this.deathDate = deathDate;
-    }
-
-    public String getBirthPlace() {
-        return birthPlace;
-    }
-
-    public void setBirthPlace(String birthPlace) {
-        this.birthPlace = birthPlace;
-    }
-
-    public String getDeathPlace() {
-        return deathPlace;
-    }
-
-    public void setDeathPlace(String deathPlace) {
-        this.deathPlace = deathPlace;
     }
 
     public ArrayList<Person> getParents() {
@@ -293,5 +259,25 @@ public class IdentifiedPerson extends Person {
             sb.append("No spouse found\n");
         }
         return sb.toString();
+    }
+
+    public ArrayList<IdentifiedPerson> getRelatives() {
+        ArrayList<IdentifiedPerson> relatives = new ArrayList<>();
+        for (Person p : parents) {
+            if (p instanceof IdentifiedPerson) {
+                relatives.add((IdentifiedPerson) p);
+            }
+        }
+        for (Person p : children) {
+            if (p instanceof IdentifiedPerson) {
+                relatives.add((IdentifiedPerson) p);
+            }
+        }
+        for (Person p : spouse) {
+            if (p instanceof IdentifiedPerson) {
+                relatives.add((IdentifiedPerson) p);
+            }
+        }
+        return relatives;
     }
 }
