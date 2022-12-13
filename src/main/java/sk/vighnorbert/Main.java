@@ -61,7 +61,7 @@ public class Main {
                     break;
                 case "relatives":
                     System.out.println("Checking for relatives...");
-                    relatives(null, null);
+                    relatives(null, null, null);
                     break;
                 default:
                     System.out.println("Unknown command.\n");
@@ -254,11 +254,13 @@ public class Main {
      * @return true if they are related, false otherwise
      * @throws IOException if the file is not found
      */
-    public static boolean relatives(IdentifiedPerson person1, IdentifiedPerson person2) throws IOException {
-        PersonIndex index = new PersonIndex();
+    public static boolean relatives(PersonIndex index, IdentifiedPerson person1, IdentifiedPerson person2) throws IOException {
+        if (index == null) {
+            index = new PersonIndex();
 
-        // load all known data from the serialized file
-        index.readFromFile();
+            // load all known data from the serialized file
+            index.readFromFile();
+        }
 
         Scanner scanner = new Scanner(System.in);
 

@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class MainTest {
     @Test
-    void testRelatives() throws IOException {
+    void testrelatives() throws IOException {
         PersonIndex pi = new PersonIndex();
 
         IdentifiedPerson johnDoe = new IdentifiedPerson("John Doe");
@@ -33,21 +33,21 @@ public class MainTest {
         IdentifiedPerson steveSmith = new IdentifiedPerson("Steve Smith");
         pi.addPerson(steveSmith);
 
-        assertTrue(Main.relatives(johnDoe, johnDoeSr));
-        assertTrue(Main.relatives(johnDoeSr, johnDoe));
+        assertTrue(Main.relatives(pi, johnDoe, johnDoeSr));
+        assertTrue(Main.relatives(pi, johnDoeSr, johnDoe));
 
-        assertTrue(Main.relatives(johnDoe, amandaDoe));
-        assertTrue(Main.relatives(amandaDoe, johnDoe));
+        assertTrue(Main.relatives(pi, johnDoe, amandaDoe));
+        assertTrue(Main.relatives(pi, amandaDoe, johnDoe));
 
-        assertTrue(Main.relatives(amandaDoe, johnDoeSr));
-        assertTrue(Main.relatives(johnDoeSr, amandaDoe));
+        assertTrue(Main.relatives(pi, amandaDoe, johnDoeSr));
+        assertTrue(Main.relatives(pi, johnDoeSr, amandaDoe));
 
-        assertFalse(Main.relatives(steveSmith, johnDoe));
-        assertFalse(Main.relatives(steveSmith, johnDoeSr));
-        assertFalse(Main.relatives(steveSmith, amandaDoe));
-        assertFalse(Main.relatives(johnDoe, steveSmith));
-        assertFalse(Main.relatives(johnDoeSr, steveSmith));
-        assertFalse(Main.relatives(amandaDoe, steveSmith));
+        assertFalse(Main.relatives(pi, steveSmith, johnDoe));
+        assertFalse(Main.relatives(pi, steveSmith, johnDoeSr));
+        assertFalse(Main.relatives(pi, steveSmith, amandaDoe));
+        assertFalse(Main.relatives(pi, johnDoe, steveSmith));
+        assertFalse(Main.relatives(pi, johnDoeSr, steveSmith));
+        assertFalse(Main.relatives(pi, amandaDoe, steveSmith));
     }
 
     @BeforeAll
